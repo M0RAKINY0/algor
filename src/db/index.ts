@@ -1,0 +1,9 @@
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import { env } from '../config/env.js';
+import * as schema from './schema.js';
+
+// The pool opens connections on the first query, not at import time.
+export const pool = new Pool({ connectionString: env.DATABASE_URL });
+
+export const db = drizzle(pool, { schema, casing: 'snake_case' });
