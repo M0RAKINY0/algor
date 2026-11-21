@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { usersDocs } from '../modules/users/users.docs.js';
+import { ingestDocs } from '../modules/ingest/ingest.docs.js';
 import {
   jsonContent,
   schemaRef,
@@ -55,7 +55,7 @@ const coreDocs: OpenApiModule = {
 };
 
 // Feature docs from src/modules register here alongside their routers in src/app.ts.
-const modules: OpenApiModule[] = [coreDocs, usersDocs];
+const modules: OpenApiModule[] = [coreDocs, ingestDocs];
 
 function buildOpenApiDocument(mods: OpenApiModule[]) {
   const tags: OpenApiTag[] = [];
