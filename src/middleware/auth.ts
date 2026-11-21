@@ -1,7 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import { z } from 'zod';
 import { HttpError } from '../lib/http-error.js';
-import { userExists } from '../modules/users/users.service.js';
+import { userExists } from '../modules/ingest/ingest.service.js';
 
 declare global {
   namespace Express {

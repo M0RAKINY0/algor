@@ -16,21 +16,26 @@ describe('docs routes', () => {
       name: 'x-user-id',
     });
     expect(Object.keys(spec.body.paths)).toEqual(
-      expect.arrayContaining(['/health', '/api/users', '/api/users/me', '/api/users/{handle}']),
+      expect.arrayContaining([
+        '/health',
+        '/api/ingest/users',
+        '/api/ingest/posts',
+        '/api/ingest/graph',
+      ]),
     );
     expect(Object.keys(spec.body.components.schemas)).toEqual(
       expect.arrayContaining([
         'HealthResponse',
         'ErrorResponse',
         'ValidationErrorResponse',
-        'CreateUserInput',
-        'UpdateUserInput',
-        'UserProfile',
+        'IngestUsersInput',
+        'IngestUsersResponse',
+        'IngestPostsInput',
+        'IngestPostsResponse',
+        'IngestGraphInput',
+        'IngestGraphResponse',
       ]),
     );
-
-    expect(spec.body.components.schemas.UserProfile.properties.id.format).toBe('uuid');
-    expect(spec.body.components.schemas.UserProfile.properties.createdAt.format).toBe('date-time');
 
     const ui = await request(app).get('/docs').redirects(1);
     expect(ui.status).toBe(200);

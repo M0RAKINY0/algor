@@ -5,7 +5,12 @@ function pgError(err: unknown): { code?: string; constraint?: string } | undefin
   return 'cause' in err ? pgError(err.cause) : undefined;
 }
 
-export function isUniqueViolation(err: unknown, constraint: string): boolean {
+export function isUniqueViolation(err: unknown, constraint?: string): boolean {
   const pg = pgError(err);
-  return pg?.code === '23505' && pg.constraint === constraint;
+  if (pg?.code !== '23505') return false;
+  return constraint ? pg.constraint === constraint : true;
+}
+
+export function isForeignKeyViolation(err: unknown): boolean {
+  return pgError(err)?.code === '23503';
 }
