@@ -6,7 +6,7 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/algor_test',
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5434/algor_test',
     },
   },
 });
