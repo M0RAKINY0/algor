@@ -4,7 +4,7 @@ import { pool } from './db/index.js';
 import { logger } from './lib/logger.js';
 
 const server = createApp().listen(env.PORT, () => {
-  logger.info(`API listening on http://localhost:${env.PORT}`);
+  logger.info(`API listening on http://localhost:${env.PORT} (docs at /docs)`);
 });
 
 async function shutdown(signal: string) {

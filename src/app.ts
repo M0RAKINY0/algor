@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
+import { docsRouter } from './docs/docs.routes.js';
 import { logger } from './lib/logger.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { usersRouter } from './modules/users/users.routes.js';
@@ -18,6 +19,8 @@ export function createApp() {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+
+  app.use(docsRouter);
 
   // Feature routers from src/modules mount here.
   app.use('/api/users', usersRouter);
