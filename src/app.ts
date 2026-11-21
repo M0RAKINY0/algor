@@ -5,6 +5,7 @@ import { pinoHttp } from 'pino-http';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { errorHandler, notFound } from './middleware/error.js';
+import { usersRouter } from './modules/users/users.routes.js';
 
 export function createApp() {
   const app = express();
@@ -18,7 +19,8 @@ export function createApp() {
     res.json({ status: 'ok' });
   });
 
-  // Feature routers from src/modules mount here, e.g. app.use('/api/feed', feedRouter).
+  // Feature routers from src/modules mount here.
+  app.use('/api/users', usersRouter);
 
   app.use(notFound);
   app.use(errorHandler);
