@@ -6,6 +6,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -18,6 +19,7 @@ import {
   varchar,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
+import type { RankingConfig } from '../config/ranking.js';
 
 const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
@@ -261,4 +263,19 @@ export const impressions = pgTable(
     primaryKey({ columns: [t.userId, t.postId] }),
     index('impressions_user_served_idx').on(t.userId, t.servedAt.desc()),
   ],
+);
+
+// ---------- ranking config ----------
+
+// Singleton row (id = 1) holding the active ranking configuration. Locking this row with
+// SELECT ... FOR UPDATE coordinates config updates, engagement rebuilds, and signal writes.
+export const rankingConfig = pgTable(
+  'ranking_config',
+  {
+    id: integer().primaryKey().default(1),
+    config: jsonb().$type<RankingConfig>().notNull(),
+    version: integer().notNull().default(1),
+    updatedAt: updatedAt(),
+  },
+  (t) => [check('ranking_config_singleton', sql`${t.id} = 1`)],
 );

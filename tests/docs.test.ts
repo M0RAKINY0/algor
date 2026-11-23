@@ -15,12 +15,19 @@ describe('docs routes', () => {
       in: 'header',
       name: 'x-user-id',
     });
+    expect(spec.body.components.securitySchemes.AdminKeyHeader).toMatchObject({
+      type: 'apiKey',
+      in: 'header',
+      name: 'x-admin-key',
+    });
     expect(Object.keys(spec.body.paths)).toEqual(
       expect.arrayContaining([
         '/health',
         '/api/ingest/users',
         '/api/ingest/posts',
         '/api/ingest/graph',
+        '/api/ranking/config',
+        '/api/ranking/config/reset',
       ]),
     );
     expect(Object.keys(spec.body.components.schemas)).toEqual(
@@ -34,6 +41,8 @@ describe('docs routes', () => {
         'IngestPostsResponse',
         'IngestGraphInput',
         'IngestGraphResponse',
+        'RankingConfig',
+        'PatchRankingConfigInput',
       ]),
     );
 
