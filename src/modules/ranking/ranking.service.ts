@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import {
   DEFAULT_RANKING_CONFIG,
   havePostStatsWeightsChanged,
@@ -10,6 +10,7 @@ import {
 } from '../../config/ranking.js';
 import { db } from '../../db/index.js';
 import { postStats, rankingConfig } from '../../db/schema.js';
+import { buildEngagementScoreSql } from './ranking.sql.js';
 
 const SINGLETON_ID = 1;
 
@@ -41,8 +42,8 @@ async function ensureAndLockConfigRow(
 
 /**
  * Reads the active ranking config row inside an existing transaction with a `FOR SHARE` lock.
- * Upcoming `signals` writes can call this so incremental `post_stats` updates always use the
- * exact same weight version as concurrent config rebuilds.
+ * Signal writes call this so incremental `post_stats` updates always use the exact same weight
+ * version as concurrent config rebuilds.
  */
 export async function readRankingConfigForShare(tx: DbExecutor): Promise<RankingConfig> {
   await tx
@@ -83,25 +84,18 @@ export async function recomputePostEngagementScores(
   weights: InteractionWeights,
   executor: DbExecutor = db,
 ): Promise<void> {
-  // Cast every integer count and fractional weight parameter explicitly to double precision
-  // so PostgreSQL never infers decimal parameters (e.g. 13.5, 0.5) as integer.
-  // In IEEE-754 float32 round-to-nearest-even, values with |x| <= 2^-150 (half of the smallest
-  // nonzero float32 subnormal 2^-149) round to 0 and would raise PostgreSQL `real` underflow.
-  // Flush only those exact values to 0::real while preserving every representable nonzero `real`.
-  const scoreExpr = sql`(
-    (${postStats.replyCount}::double precision * ${weights.reply}::double precision)
-    + (${postStats.repostCount}::double precision * ${weights.repost}::double precision)
-    + (${postStats.likeCount}::double precision * ${weights.like}::double precision)
-    + (${postStats.viewCount}::double precision * ${weights.view}::double precision)
-    + (${postStats.notInterestedCount}::double precision * ${weights.not_interested}::double precision)
-    + (${postStats.reportCount}::double precision * ${weights.report}::double precision)
-  )`;
-
   await executor.update(postStats).set({
-    engagementScore: sql`CASE
-      WHEN abs(${scoreExpr}) <= power(2::double precision, -150) THEN 0::real
-      ELSE (${scoreExpr})::real
-    END`,
+    engagementScore: buildEngagementScoreSql(
+      {
+        replyCount: postStats.replyCount,
+        repostCount: postStats.repostCount,
+        likeCount: postStats.likeCount,
+        viewCount: postStats.viewCount,
+        notInterestedCount: postStats.notInterestedCount,
+        reportCount: postStats.reportCount,
+      },
+      weights,
+    ),
     updatedAt: new Date(),
   });
 }

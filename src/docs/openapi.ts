@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ingestDocs } from '../modules/ingest/ingest.docs.js';
 import { rankingDocs } from '../modules/ranking/ranking.docs.js';
+import { signalsDocs } from '../modules/signals/signals.docs.js';
 import {
   jsonContent,
   schemaRef,
@@ -56,7 +57,7 @@ const coreDocs: OpenApiModule = {
 };
 
 // Feature docs from src/modules register here alongside their routers in src/app.ts.
-const modules: OpenApiModule[] = [coreDocs, ingestDocs, rankingDocs];
+const modules: OpenApiModule[] = [coreDocs, ingestDocs, signalsDocs, rankingDocs];
 
 function buildOpenApiDocument(mods: OpenApiModule[]) {
   const tags: OpenApiTag[] = [];
