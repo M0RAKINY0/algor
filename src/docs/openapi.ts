@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { feedDocs } from '../modules/feed/feed.docs.js';
 import { ingestDocs } from '../modules/ingest/ingest.docs.js';
 import { rankingDocs } from '../modules/ranking/ranking.docs.js';
+import { signalsDocs } from '../modules/signals/signals.docs.js';
 import {
   jsonContent,
   schemaRef,
@@ -56,7 +58,7 @@ const coreDocs: OpenApiModule = {
 };
 
 // Feature docs from src/modules register here alongside their routers in src/app.ts.
-const modules: OpenApiModule[] = [coreDocs, ingestDocs, rankingDocs];
+const modules: OpenApiModule[] = [coreDocs, ingestDocs, signalsDocs, feedDocs, rankingDocs];
 
 function buildOpenApiDocument(mods: OpenApiModule[]) {
   const tags: OpenApiTag[] = [];
@@ -85,7 +87,14 @@ function buildOpenApiDocument(mods: OpenApiModule[]) {
           in: 'header',
           name: 'x-user-id',
           description:
-            'Dev-only user identity header containing the caller UUID. Replaced by JWT auth later.',
+            'Caller user UUID (canonicalized to lowercase). Requires x-internal-key when INTERNAL_API_KEY is set (mandatory in production).',
+        },
+        InternalKeyHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-internal-key',
+          description:
+            'Trusted gateway key required alongside x-user-id when INTERNAL_API_KEY is set (mandatory in production).',
         },
         AdminKeyHeader: {
           type: 'apiKey',

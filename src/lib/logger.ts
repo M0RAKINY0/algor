@@ -4,9 +4,11 @@ import { env } from '../config/env.js';
 export const LOGGER_REDACT: LoggerOptions['redact'] = {
   paths: [
     'req.headers["x-admin-key"]',
+    'req.headers["x-internal-key"]',
     'req.headers.authorization',
     'req.headers.cookie',
     'headers["x-admin-key"]',
+    'headers["x-internal-key"]',
     'headers.authorization',
     'headers.cookie',
   ],

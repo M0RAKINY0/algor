@@ -7,16 +7,17 @@ import { createLogger } from '../src/lib/logger.js';
 import { errorHandler } from '../src/middleware/error.js';
 
 const ALICE = '11111111-1111-4111-8111-111111111111';
+const ALICE_UPPER = '11111111-1111-4111-8111-111111111111'.toUpperCase();
 
 vi.mock('../src/modules/ingest/ingest.service.js', () => ({
   userExists: vi.fn(async (id: string) => id === ALICE),
 }));
 
-const { createRequireAdmin, currentUserId, requireUser } =
+const { createRequireAdmin, createRequireUser, currentUserId, requireUser } =
   await import('../src/middleware/auth.js');
 
 describe('requireUser middleware', () => {
-  it('enforces a valid existing x-user-id UUID header', async () => {
+  it('enforces a valid existing x-user-id UUID header and canonicalizes UUID casing to lowercase', async () => {
     const app = express();
     app.get('/whoami', requireUser, (req, res) => {
       res.json({ userId: currentUserId(req) });
@@ -32,10 +33,54 @@ describe('requireUser middleware', () => {
     const ok = await request(app).get('/whoami').set('x-user-id', ALICE);
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual({ userId: ALICE });
+
+    const upperOk = await request(app).get('/whoami').set('x-user-id', ALICE_UPPER);
+    expect(upperOk.status).toBe(200);
+    expect(upperOk.body).toEqual({ userId: ALICE });
+  });
+
+  it('requires x-internal-key when configured and fails closed in production if unset', async () => {
+    const makeApp = (internalApiKey: string | undefined, nodeEnv: string) => {
+      const app = express();
+      app.get(
+        '/whoami',
+        createRequireUser(
+          () => ({ internalApiKey, nodeEnv }),
+          async (id) => id === ALICE,
+        ),
+        (req, res) => {
+          res.json({ userId: currentUserId(req) });
+        },
+      );
+      app.use(errorHandler);
+      return app;
+    };
+
+    const prodUnconfigured = makeApp(undefined, 'production');
+    expect((await request(prodUnconfigured).get('/whoami').set('x-user-id', ALICE)).status).toBe(
+      503,
+    );
+
+    const gatewaySecured = makeApp('gateway-secret-123', 'production');
+    expect((await request(gatewaySecured).get('/whoami').set('x-user-id', ALICE)).status).toBe(401);
+    expect(
+      (
+        await request(gatewaySecured)
+          .get('/whoami')
+          .set('x-user-id', ALICE)
+          .set('x-internal-key', 'wrong')
+      ).status,
+    ).toBe(401);
+    const ok = await request(gatewaySecured)
+      .get('/whoami')
+      .set('x-user-id', ALICE_UPPER)
+      .set('x-internal-key', 'gateway-secret-123');
+    expect(ok.status).toBe(200);
+    expect(ok.body).toEqual({ userId: ALICE });
   });
 });
 
-describe('createRequireAdmin middleware', () => {
+describe('createRequireAdmin middleware & log redaction', () => {
   it('enforces x-admin-key when configured and fails closed in production if unset', async () => {
     const makeApp = (apiKey: string | undefined, nodeEnv: string) => {
       const app = express();
@@ -67,7 +112,7 @@ describe('createRequireAdmin middleware', () => {
     expect((await request(devOpen).post('/admin')).status).toBe(200);
   });
 
-  it('redacts x-admin-key and authorization headers in Pino HTTP request logs', async () => {
+  it('redacts x-admin-key, x-internal-key, and authorization headers in Pino HTTP request logs', async () => {
     const chunks: string[] = [];
     const destination = new Writable({
       write(chunk, _encoding, callback) {
@@ -80,19 +125,22 @@ describe('createRequireAdmin middleware', () => {
       logger: createLogger({ level: 'info' }, destination),
     });
 
-    const secret = 'super-secret-admin-key-xyz';
+    const adminSecret = 'super-secret-admin-key-xyz';
+    const internalSecret = 'super-secret-internal-key-abc';
     const bearer = 'Bearer top-secret-jwt-token';
 
     const res = await request(app)
       .get('/health')
-      .set('x-admin-key', secret)
+      .set('x-admin-key', adminSecret)
+      .set('x-internal-key', internalSecret)
       .set('authorization', bearer);
 
     expect(res.status).toBe(200);
 
     const logOutput = chunks.join('');
     expect(logOutput).toContain('[REDACTED]');
-    expect(logOutput).not.toContain(secret);
+    expect(logOutput).not.toContain(adminSecret);
+    expect(logOutput).not.toContain(internalSecret);
     expect(logOutput).not.toContain(bearer);
   });
 });

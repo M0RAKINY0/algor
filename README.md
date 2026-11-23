@@ -54,15 +54,15 @@ Interactive docs are served via Swagger UI at **`/docs`** (raw OpenAPI 3.0.3 spe
 
 ### Core endpoints
 
-| Area        | Endpoint                               | Purpose                                                                        | Status  |
-| ----------- | -------------------------------------- | ------------------------------------------------------------------------------ | ------- |
-| **System**  | `GET /health`                          | Liveness check                                                                 | Done    |
-| **Docs**    | `GET /docs`, `GET /openapi.json`       | Swagger UI & OpenAPI spec                                                      | Done    |
-| **Ingest**  | `POST /api/ingest/{users,posts,graph}` | Thin intake for users, posts (extracts `#topics`), and follow/block/mute edges | Done    |
-| **Signals** | `POST /api/events`                     | Log an interaction and update `post_stats` + decaying affinities               | Planned |
-| **Signals** | `GET /api/signals`                     | Inspect the caller's decayed top authors & topics                              | Planned |
-| **Feed**    | `GET /api/feed`                        | Ranked, filtered, mixed feed (`?limit=20&cursor=...&debug=true`)               | Planned |
-| **Tuning**  | `GET / PATCH /api/ranking/config`      | View, live-tweak, or reset weights, decay half-lives, and diversity knobs      | Done    |
+| Area        | Endpoint                               | Purpose                                                                        | Status |
+| ----------- | -------------------------------------- | ------------------------------------------------------------------------------ | ------ |
+| **System**  | `GET /health`                          | Liveness check                                                                 | Done   |
+| **Docs**    | `GET /docs`, `GET /openapi.json`       | Swagger UI & OpenAPI spec                                                      | Done   |
+| **Ingest**  | `POST /api/ingest/{users,posts,graph}` | Thin intake for users, posts (extracts `#topics`), and follow/block/mute edges | Done   |
+| **Signals** | `POST /api/events`                     | Log an interaction and update `post_stats` + decaying affinities               | Done   |
+| **Signals** | `GET /api/signals`                     | Inspect the caller's decayed top authors & topics                              | Done   |
+| **Feed**    | `GET /api/feed`                        | Ranked, filtered, mixed feed (`?limit=20&cursor=...&debug=true`)               | Done   |
+| **Tuning**  | `GET / PATCH /api/ranking/config`      | View, live-tweak, or reset weights, decay half-lives, and diversity knobs      | Done   |
 
 ---
 
@@ -84,12 +84,12 @@ src/
 ├── middleware/           # x-user-id auth guard & global error handler
 └── modules/
     ├── ingest/           # Thin intake for users, posts (+hashtags), and graph edges
-    ├── signals/          # (planned) Interaction logging + decaying affinity math
-    ├── candidates/       # (planned) Multi-source candidate retrieval
+    ├── signals/          # Interaction logging + decaying affinity math
+    ├── candidates/       # Multi-source candidate retrieval
     ├── ranking/          # Scoring formula, author diversity, debug breakdowns & config API
-    └── feed/             # (planned) Pipeline orchestration, diversity mix, impressions
+    └── feed/             # Pipeline orchestration, diversity mix, impressions
 scripts/
-└── seed.ts               # (planned) Clustered users, hashtagged posts, graph & interactions
+└── seed.ts               # Clustered users, hashtagged posts, graph & interactions
 ```
 
 ---

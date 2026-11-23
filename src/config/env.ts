@@ -16,6 +16,7 @@ const schema = z.object({
     ),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   ADMIN_API_KEY: z.string().min(1).optional(),
+  INTERNAL_API_KEY: z.string().min(1).optional(),
 });
 
 const parsed = schema.safeParse(process.env);

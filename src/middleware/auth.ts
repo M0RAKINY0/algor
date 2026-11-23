@@ -13,32 +13,64 @@ declare global {
   }
 }
 
-const userIdSchema = z.uuid();
+const userIdSchema = z.uuid().transform((v) => v.toLowerCase());
 
-// Dev-only identity: the caller says who they are in the x-user-id header, and we trust it.
-// To add real login, replace this function with JWT verification. Routes only read
-// req.userId, so nothing else changes.
-export const requireUser: RequestHandler = async (req, _res, next) => {
-  const header = req.header('x-user-id');
-  if (!header) throw new HttpError(401, 'Missing x-user-id header');
+function sha256(value: string): Buffer {
+  return createHash('sha256').update(value, 'utf8').digest();
+}
 
-  const parsed = userIdSchema.safeParse(header);
-  if (!parsed.success) throw new HttpError(401, 'x-user-id must be a UUID');
+function keysMatch(provided: string | undefined, expected: string): boolean {
+  return Boolean(provided && timingSafeEqual(sha256(provided), sha256(expected)));
+}
 
-  if (!(await userExists(parsed.data))) throw new HttpError(401, 'Unknown user');
+/**
+ * Identity guard reading the caller UUID from `x-user-id` (canonicalized to lowercase so it
+ * always matches PostgreSQL UUID strings).
+ *
+ * Security boundary:
+ * - When `INTERNAL_API_KEY` is configured, callers must also present a matching `x-internal-key`
+ *   header (e.g. injected by an authenticated API gateway).
+ * - In `production`, fails closed with 503 if `INTERNAL_API_KEY` is unset so unverified
+ *   `x-user-id` headers are never trusted publicly.
+ * - In `development`/`test` with no `INTERNAL_API_KEY`, accepts `x-user-id` directly for local ergonomics.
+ */
+export function createRequireUser(
+  getAuthConfig: () => { internalApiKey: string | undefined; nodeEnv: string },
+  checkUserExists: (id: string) => Promise<boolean> = userExists,
+): RequestHandler {
+  return async (req, _res, next) => {
+    const { internalApiKey, nodeEnv } = getAuthConfig();
 
-  req.userId = parsed.data;
-  next();
-};
+    if (!internalApiKey) {
+      if (nodeEnv === 'production') {
+        throw new HttpError(503, 'Internal API key is not configured for x-user-id trust boundary');
+      }
+    } else if (!keysMatch(req.header('x-internal-key'), internalApiKey)) {
+      throw new HttpError(401, 'Invalid or missing x-internal-key header');
+    }
+
+    const header = req.header('x-user-id');
+    if (!header) throw new HttpError(401, 'Missing x-user-id header');
+
+    const parsed = userIdSchema.safeParse(header);
+    if (!parsed.success) throw new HttpError(401, 'x-user-id must be a UUID');
+
+    if (!(await checkUserExists(parsed.data))) throw new HttpError(401, 'Unknown user');
+
+    req.userId = parsed.data;
+    next();
+  };
+}
+
+export const requireUser = createRequireUser(() => ({
+  internalApiKey: env.INTERNAL_API_KEY,
+  nodeEnv: env.NODE_ENV,
+}));
 
 // For handlers behind requireUser.
 export function currentUserId(req: Request): string {
   if (!req.userId) throw new HttpError(401, 'Not signed in');
   return req.userId;
-}
-
-function sha256(value: string): Buffer {
-  return createHash('sha256').update(value, 'utf8').digest();
 }
 
 export function createRequireAdmin(
@@ -55,8 +87,7 @@ export function createRequireAdmin(
       return;
     }
 
-    const provided = req.header('x-admin-key');
-    if (!provided || !timingSafeEqual(sha256(provided), sha256(apiKey))) {
+    if (!keysMatch(req.header('x-admin-key'), apiKey)) {
       throw new HttpError(401, 'Invalid or missing x-admin-key header');
     }
 

@@ -15,6 +15,11 @@ describe('docs routes', () => {
       in: 'header',
       name: 'x-user-id',
     });
+    expect(spec.body.components.securitySchemes.InternalKeyHeader).toMatchObject({
+      type: 'apiKey',
+      in: 'header',
+      name: 'x-internal-key',
+    });
     expect(spec.body.components.securitySchemes.AdminKeyHeader).toMatchObject({
       type: 'apiKey',
       in: 'header',
@@ -26,6 +31,9 @@ describe('docs routes', () => {
         '/api/ingest/users',
         '/api/ingest/posts',
         '/api/ingest/graph',
+        '/api/events',
+        '/api/signals',
+        '/api/feed',
         '/api/ranking/config',
         '/api/ranking/config/reset',
       ]),
@@ -41,6 +49,12 @@ describe('docs routes', () => {
         'IngestPostsResponse',
         'IngestGraphInput',
         'IngestGraphResponse',
+        'RecordEventInput',
+        'RecordEventResponse',
+        'UserSignalsResponse',
+        'ScoreBreakdown',
+        'FeedItem',
+        'FeedResponse',
         'RankingConfig',
         'PatchRankingConfigInput',
       ]),
