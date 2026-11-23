@@ -85,7 +85,14 @@ function buildOpenApiDocument(mods: OpenApiModule[]) {
           in: 'header',
           name: 'x-user-id',
           description:
-            'Dev-only user identity header containing the caller UUID. Replaced by JWT auth later.',
+            'Caller user UUID (canonicalized to lowercase). Requires x-internal-key when INTERNAL_API_KEY is set (mandatory in production).',
+        },
+        InternalKeyHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-internal-key',
+          description:
+            'Trusted gateway key required alongside x-user-id when INTERNAL_API_KEY is set (mandatory in production).',
         },
         AdminKeyHeader: {
           type: 'apiKey',

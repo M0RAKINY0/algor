@@ -15,6 +15,11 @@ describe('docs routes', () => {
       in: 'header',
       name: 'x-user-id',
     });
+    expect(spec.body.components.securitySchemes.InternalKeyHeader).toMatchObject({
+      type: 'apiKey',
+      in: 'header',
+      name: 'x-internal-key',
+    });
     expect(spec.body.components.securitySchemes.AdminKeyHeader).toMatchObject({
       type: 'apiKey',
       in: 'header',
