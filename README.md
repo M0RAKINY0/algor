@@ -138,6 +138,39 @@ Once running:
 
 ---
 
+## Continuous integration
+
+[GitHub Actions](https://github.com/M0RAKINY0/algor/actions/workflows/ci.yml) runs
+the `CI / Checks` job on every pull request and every push to `main`. You can
+also start it manually from the Actions tab.
+
+The job uses Node.js 22, the pnpm version declared in `package.json`, and a
+fresh PostgreSQL 17 service. It installs dependencies with a frozen lockfile,
+then runs type checking, formatting, the build, database migrations, and the
+full Vitest suite, including PostgreSQL integration tests. The pnpm store is
+cached between runs. Superseded runs are canceled, and each job has a 15 minute
+timeout. No repository secrets are required.
+
+The disposable database is `algor_test` on port `5434`, matching
+`vitest.config.ts`. Test files run serially because integration suites share
+that database. Tests delete their data, so use a dedicated test database.
+
+To run the same checks locally after installing dependencies and starting
+PostgreSQL with `docker compose up -d`, create the test database once:
+
+```bash
+docker compose exec db createdb -U postgres algor_test
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm format:check
+pnpm build
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/algor_test pnpm db:migrate
+pnpm test
+```
+
+The environment assignment above uses Bash syntax. In PowerShell, set
+`$env:DATABASE_URL` to the test URL before running `pnpm db:migrate`.
+
 ## Scripts
 
 | Command             | Description                                             |
