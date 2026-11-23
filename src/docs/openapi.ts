@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ingestDocs } from '../modules/ingest/ingest.docs.js';
+import { rankingDocs } from '../modules/ranking/ranking.docs.js';
 import {
   jsonContent,
   schemaRef,
@@ -55,7 +56,7 @@ const coreDocs: OpenApiModule = {
 };
 
 // Feature docs from src/modules register here alongside their routers in src/app.ts.
-const modules: OpenApiModule[] = [coreDocs, ingestDocs];
+const modules: OpenApiModule[] = [coreDocs, ingestDocs, rankingDocs];
 
 function buildOpenApiDocument(mods: OpenApiModule[]) {
   const tags: OpenApiTag[] = [];
@@ -85,6 +86,13 @@ function buildOpenApiDocument(mods: OpenApiModule[]) {
           name: 'x-user-id',
           description:
             'Dev-only user identity header containing the caller UUID. Replaced by JWT auth later.',
+        },
+        AdminKeyHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-admin-key',
+          description:
+            'Admin key for ranking config mutations when ADMIN_API_KEY is set (required in production).',
         },
       },
       schemas,

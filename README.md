@@ -62,7 +62,7 @@ Interactive docs are served via Swagger UI at **`/docs`** (raw OpenAPI 3.0.3 spe
 | **Signals** | `POST /api/events`                     | Log an interaction and update `post_stats` + decaying affinities               | Planned |
 | **Signals** | `GET /api/signals`                     | Inspect the caller's decayed top authors & topics                              | Planned |
 | **Feed**    | `GET /api/feed`                        | Ranked, filtered, mixed feed (`?limit=20&cursor=...&debug=true`)               | Planned |
-| **Tuning**  | `GET / PATCH /api/ranking/config`      | View or live-tweak weights, decay half-lives, and diversity knobs              | Planned |
+| **Tuning**  | `GET / PATCH /api/ranking/config`      | View, live-tweak, or reset weights, decay half-lives, and diversity knobs      | Done    |
 
 ---
 
@@ -74,7 +74,7 @@ src/
 ├── index.ts              # HTTP server entrypoint & graceful shutdown
 ├── config/
 │   ├── env.ts            # Zod-validated environment variables
-│   └── ranking.ts        # (planned) Tunable weights, decay half-lives, mix ratios
+│   └── ranking.ts        # Tunable weights, decay half-lives, mix ratios
 ├── db/
 │   ├── index.ts          # node-postgres pool + Drizzle client (snake_case mapping)
 │   └── schema.ts         # All tables: users, posts, topics, post_topics, graph,
@@ -86,7 +86,7 @@ src/
     ├── ingest/           # Thin intake for users, posts (+hashtags), and graph edges
     ├── signals/          # (planned) Interaction logging + decaying affinity math
     ├── candidates/       # (planned) Multi-source candidate retrieval
-    ├── ranking/          # (planned) Scoring formula + explainable score breakdowns
+    ├── ranking/          # Scoring formula, author diversity, debug breakdowns & config API
     └── feed/             # (planned) Pipeline orchestration, diversity mix, impressions
 scripts/
 └── seed.ts               # (planned) Clustered users, hashtagged posts, graph & interactions
