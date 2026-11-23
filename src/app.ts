@@ -7,6 +7,7 @@ import { env } from './config/env.js';
 import { docsRouter } from './docs/docs.routes.js';
 import { logger as defaultLogger } from './lib/logger.js';
 import { errorHandler, notFound } from './middleware/error.js';
+import { feedRouter } from './modules/feed/feed.routes.js';
 import { ingestRouter } from './modules/ingest/ingest.routes.js';
 import { rankingRouter } from './modules/ranking/ranking.routes.js';
 import { eventsRouter, signalsRouter } from './modules/signals/signals.routes.js';
@@ -29,6 +30,7 @@ export function createApp(options?: { logger?: Logger }) {
   app.use('/api/ingest', ingestRouter);
   app.use('/api/events', eventsRouter);
   app.use('/api/signals', signalsRouter);
+  app.use('/api/feed', feedRouter);
   app.use('/api/ranking', rankingRouter);
 
   app.use(notFound);
